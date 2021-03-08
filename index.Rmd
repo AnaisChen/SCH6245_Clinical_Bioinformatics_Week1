@@ -151,7 +151,6 @@ survey_data2$yearBin <- cut(survey_data2$year,
 
 table(survey_data2$yearBin)
 ```
-</div>
 
 ## Exploratory Analysis {.tabset .tabset-fade}
 
@@ -326,7 +325,9 @@ p6 <- ggplot(survey_data2, aes(x = hindfoot_length, fill = plot_id)) +
   xlab("Hindfoot Length (mm)") + ylab("Density")
   
 ```
+</div>
 ### Summary Table
+<div class="fold s">
 ```{r}
 #creates summary table with kable
 kable(t1, 

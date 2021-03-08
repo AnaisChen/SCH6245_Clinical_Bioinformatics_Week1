@@ -244,7 +244,7 @@ div.tocify {
 
 
 
-<a href="https://your-url" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
+<a href="https://github.com/AnaisChen/SCH6245_Clinical_Bioinformatics_Week1.git" class="github-corner" aria-label="View source on GitHub"><svg width="80" height="80" viewBox="0 0 250 250" style="fill:#70B7FD; color:#fff; position: absolute; top: 0; border: 0; right: 0;" aria-hidden="true"><path d="M0,0 L115,115 L130,115 L142,142 L250,250 L250,0 Z"></path><path d="M128.3,109.0 C113.8,99.7 119.0,89.6 119.0,89.6 C122.0,82.7 120.5,78.6 120.5,78.6 C119.2,72.0 123.4,76.3 123.4,76.3 C127.3,80.9 125.5,87.3 125.5,87.3 C122.9,97.6 130.6,101.9 134.4,103.2" fill="currentColor" style="transform-origin: 130px 106px;" class="octo-arm"></path><path d="M115.0,115.0 C114.9,115.1 118.7,116.5 119.8,115.4 L133.7,101.6 C136.9,99.2 139.9,98.4 142.2,98.6 C133.8,88.0 127.5,74.4 143.8,58.0 C148.5,53.4 154.0,51.2 159.7,51.0 C160.3,49.4 163.2,43.6 171.4,40.1 C171.4,40.1 176.1,42.5 178.8,56.2 C183.1,58.6 187.2,61.8 190.9,65.4 C194.5,69.0 197.7,73.2 200.1,77.6 C213.8,80.2 216.3,84.9 216.3,84.9 C212.7,93.1 206.9,96.0 205.4,96.6 C205.1,102.4 203.0,107.8 198.3,112.5 C181.9,128.9 168.3,122.5 157.7,114.1 C157.9,116.9 156.7,120.9 152.7,124.9 L141.0,136.5 C139.8,137.7 141.6,141.9 141.8,141.8 Z" fill="currentColor" class="octo-body"></path></svg></a><style>.github-corner:hover .octo-arm{animation:octocat-wave 560ms ease-in-out}@keyframes octocat-wave{0%,100%{transform:rotate(0)}20%,60%{transform:rotate(-25deg)}40%,80%{transform:rotate(10deg)}}@media (max-width:500px){.github-corner:hover .octo-arm{animation:none}.github-corner .octo-arm{animation:octocat-wave 560ms ease-in-out}}</style>
 
 <div id="header">
 
@@ -394,6 +394,7 @@ str(survey_data)</code></pre>
 ##  $ date           : POSIXct, format: &quot;1991-08-07&quot; &quot;1993-01-24&quot; ...
 ##  $ genus          : chr  &quot;Ammodramus&quot; &quot;Ammodramus&quot; &quot;Ammospermophilus&quot; &quot;Ammospermophilus&quot; ...
 ##  $ taxa           : chr  &quot;Bird&quot; &quot;Bird&quot; &quot;Rodent&quot; &quot;Rodent&quot; ...</code></pre>
+</div>
 <p><br> On inspection of the data, many data points seem to be missing weight, hindfoot length and sex observations, so I flag the data with missing inputs and create a new survey data set that does not include them. I then check to make sure all the missing data points have been excluded. <br></p>
 <pre class="r"><code>#creates new data set without missing data for sex or weight
 survey_data$sexNA &lt;- ifelse(is.na(survey_data$sex), 1, 0)  #creates number index for missing sex
@@ -417,6 +418,7 @@ table(survey_data$sexNA, survey_data$anyNA)    #checks all sexNA are counted</co
 <pre class="r"><code>survey_data2 &lt;- survey_data[!survey_data$anyNA==1, ]    #creates new data excluding missing
 dim(survey_data)</code></pre>
 <pre><code>## [1] 34786    15</code></pre>
+<div class="fold o">
 <pre class="r"><code>str(survey_data2)</code></pre>
 <pre><code>## &#39;data.frame&#39;:    32182 obs. of  15 variables:
 ##  $ species_id     : Factor w/ 54 levels &quot;Amphispiza bilineata&quot;,..: 4 4 4 4 4 4 4 4 4 4 ...
@@ -449,6 +451,7 @@ dim(survey_data)</code></pre>
 ## 746              14      7 1990-04-24 Baiomys Rodent     0        0     0
 ## 747              14      9 1991-01-12 Baiomys Rodent     0        0     0
 ## 748              14      9 1992-03-07 Baiomys Rodent     0        0     0</code></pre>
+</div>
 <p><br> Finally, I create a new variable to separate the data into bins by year, with a 5 year interval, for exploratory analysis. <br></p>
 <pre class="r"><code>#creates a variable for year bins in intervals of 5
 yearBreaks &lt;- c(min(survey_data2$year), 1982, 1988, 1992, 1997, max(survey_data2$year))
@@ -466,7 +469,6 @@ table(survey_data2$yearBin)</code></pre>
 <pre><code>## 
 ## 1977-1982 1982-1987 1987-1992 1992-1997 1997-2002 
 ##      4426      7941      5194      4786      9835</code></pre>
-</div>
 </div>
 <div id="exploratory-analysis" class="section level2 tabset tabset-fade">
 <h2 class="tabset tabset-fade">Exploratory Analysis</h2>
@@ -657,8 +659,11 @@ p6 &lt;- ggplot(survey_data2, aes(x = hindfoot_length, fill = plot_id)) +
   geom_density(size=1, alpha=0.4) + 
   theme_bw() + facet_grid(~ plot_id) + theme(legend.position = &quot;none&quot;) +
   xlab(&quot;Hindfoot Length (mm)&quot;) + ylab(&quot;Density&quot;)</code></pre>
+</div>
+</div>
 <div id="summary-table" class="section level3">
 <h3>Summary Table</h3>
+<div class="fold s">
 <pre class="r"><code>#creates summary table with kable
 kable(t1, 
       caption = &quot;**Table 1. Summary of study variables in 5 year intervals**&quot;, #table caption
@@ -948,7 +953,6 @@ Female
 </tr>
 </tfoot>
 </table>
-</div>
 </div>
 </div>
 <div id="data-visualisation" class="section level3">
