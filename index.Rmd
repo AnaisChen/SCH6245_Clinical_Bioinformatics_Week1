@@ -1,0 +1,375 @@
+---
+title: "SCI6245: Clinical Bioinformatics"
+subtitle: "*Module 1: Reproducible, Ethical and Effective Clinical Bioinformatics*"
+author: "Anais Chen <br> Master of Bioinformatics Student <br> Edith Cown University <br> achen3@our.ecu.edu.au"
+date: "Created: 25th February 2021 <br> Last Updated: `r format(Sys.Date(), format = '%d %B %Y')`"
+output: 
+  html_document:
+    css: buttons.css
+    includes:
+      before_body: header.html
+    toc: TRUE
+    toc_depth: 2
+    toc_float: 
+      collapsed: false
+      smooth_scroll: true
+---
+<script src="hideOutput.js"></script>   
+## Overview
+Module 1 discusses conduct in clinical bioinformatics research practices, including reproducibility,
+ethics, and effective communication. 
+
+```{r setup, include = FALSE }
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Load Dependendies
+```{r, echo=FALSE}
+library(tidyverse)
+library(readxl)
+library(kableExtra)
+library(ggpubr)
+```
+
+## Data Preparation
+```{r}
+#lists info sheets
+excel_sheets("./data/surveys_data.xlsx")
+
+#loading the main data
+survey_data <- read_excel("./data/surveys_data.xlsx", sheet = 1)
+
+#loading the plot info
+plot_info <- read_excel("./data/surveys_data.xlsx", sheet = 2)
+
+#load species info
+species_info <- read_excel("./data/surveys_data.xlsx", sheet = 3)
+```
+First, I clean up the sex data and give new, easier to understand labels.
+<div class="fold o">
+```{r}
+#checks data structure, shows variable names and some code
+str(survey_data)
+
+#recodes sex to numeric
+survey_data$sex <- ifelse(survey_data$sex=="M", 0, ifelse(survey_data$sex == "F", 1, "NA"))
+survey_data$sex <- factor(survey_data$sex, 
+                          levels=c(0,1), labels=c("Male", "Female"))
+```
+Then I label the plots by the plot_type information.
+
+```{r}
+#explores the data structure
+str(plot_info)
+
+#label plot_id by the plot_type info
+survey_data$plot_id <- factor(survey_data$plot_id, 
+                              levels=plot_info$plot_id, 
+                              labels=plot_info$plot_type)
+```
+<br>
+To complete the data labels, I create a new variable for species ID, combining the genus and the species variables, and append this to the survey data. 
+<br>
+```{r}
+#explores data structure
+str(species_info)
+
+#merges genus with species with a space between them
+species_info$species_lab <- paste(species_info$genus, species_info$species, " ")
+
+#checks first 10 rows
+head(species_info[1:10,])
+
+#removes lagging space
+species_info$species_lab <- trimws(species_info$species_lab, which = "right")
+
+#check first 10 rows
+head(species_info[1:10,])
+
+#labels species_id values in survey_data
+survey_data$species_id <- factor(survey_data$species_id, 
+                                 levels=species_info$species_id,
+                                 labels=species_info$species_lab)
+
+#checks main data
+str(survey_data)
+
+#adds genus and taxa to survey_data
+survey_data <- merge(survey_data, species_info[,c(2,4,5)], 
+                     by.x="species_id", by.y="species_lab")
+
+#checks main data
+str(survey_data)
+```
+</div>
+<br>
+On inspection of the data, many data points seem to be missing weight, hindfoot length and sex observations, so I flag the data with missing inputs and create a new survey data set that does not include them. I then check to make sure all the missing data points have been excluded.
+<br>
+```{r}
+#creates new data set without missing data for sex or weight
+survey_data$sexNA <- ifelse(is.na(survey_data$sex), 1, 0)  #creates number index for missing sex
+survey_data$weightNA <- ifelse(is.na(survey_data$weight), 1, 0)
+survey_data$anyNA <- ifelse(survey_data$sexNA==1 | survey_data$weightNA==1, 1, 0)  #creates number index for either missing
+
+table(survey_data$sexNA, survey_data$anyNA)    #checks all sexNA are counted
+```
+```{r}
+table(survey_data$weightNA, survey_data$anyNA) #checks all weightNA are counted
+```
+
+```{r}
+table(survey_data$anyNA)
+```
+```{r}
+survey_data2 <- survey_data[!survey_data$anyNA==1, ]    #creates new data excluding missing
+dim(survey_data)
+
+```
+<div class="fold o">
+```{r}
+str(survey_data2)
+```
+
+```{r}
+head(survey_data2)
+```
+</div>
+<br>
+Finally, I create a new variable to separate the data into bins by year, with a 5 year interval, for exploratory analysis.
+<br>
+```{r}
+#creates a variable for year bins in intervals of 5
+yearBreaks <- c(min(survey_data2$year), 1982, 1988, 1992, 1997, max(survey_data2$year))
+
+#buckets the values into bins
+survey_data2$yearBin <- cut(survey_data2$year,
+                breaks = yearBreaks,
+                include.lowest = TRUE,
+                right = FALSE,
+                labels = c("1977-1982", "1982-1987", "1987-1992", "1992-1997", "1997-2002"))
+
+#checks year bin variable
+
+table(survey_data2$yearBin)
+```
+</div>
+
+## Exploratory Analysis {.tabset .tabset-fade}
+
+### Preparation
+<div class="fold s">
+```{r}
+#creates total count variables
+yearSumm <- survey_data2 %>%
+  group_by(yearBin) %>%
+  count() %>%
+  as.data.frame()
+yearSumm$p <- round(yearSumm$n/nrow(survey_data2)*100, 1) #calculates percentages
+
+#creates sex count variables
+sexSumm <- survey_data2 %>%
+  select(yearBin, sex) %>%
+  group_by(yearBin) %>%
+  count(sex) %>%
+  as.data.frame()
+sexSumm$p <- c(round(sexSumm$n[1:2]/sum(sexSumm$n[1:2])*100, 1),
+               round(sexSumm$n[3:4]/sum(sexSumm$n[3:4])*100, 1),
+               round(sexSumm$n[5:6]/sum(sexSumm$n[5:6])*100, 1),
+               round(sexSumm$n[7:8]/sum(sexSumm$n[7:8])*100, 1),
+               round(sexSumm$n[9:10]/sum(sexSumm$n[9:10])*100, 1)) #calculates percentages
+
+#creates mean variables
+meanSumm <- survey_data2 %>%
+  select(yearBin, hindfoot_length, weight) %>%
+  group_by(yearBin) %>%
+  summarise(across(.cols = everything(), ~mean(.,na.rm = TRUE))) %>%
+  as.data.frame()
+
+#creates sd variables
+sdSumm <- survey_data2 %>%
+  select(yearBin, hindfoot_length, weight) %>%
+  group_by(yearBin) %>%
+  summarise(across(.cols = everything(), ~sd(.,na.rm = TRUE))) %>%
+  as.data.frame()
+
+#numbers in plots by yearBin
+plotSumm <- survey_data2 %>%
+  select(yearBin, plot_id) %>%
+  group_by(yearBin) %>%
+  count(plot_id) %>%
+  as.data.frame()
+ #calculates plot percentages
+plotSumm$p <- c(round(plotSumm$n[1:5]/sum(plotSumm$n[1:5])*100, 1),
+                round(plotSumm$n[6:10]/sum(plotSumm$n[6:10])*100, 1),
+                round(plotSumm$n[11:15]/sum(plotSumm$n[11:15])*100, 1),
+                round(plotSumm$n[16:20]/sum(plotSumm$n[16:20])*100, 1),
+                round(plotSumm$n[21:25]/sum(plotSumm$n[21:25])*100, 1))
+```
+```{r}
+#creates a dataframe with the desored formatting of the final table
+t1 <- data.frame(vars = c(paste0("**Total Count** (n) ","*(%)*"),
+                          paste0("**Sex** (n) ","*(%)*"),
+                          "*Male", "Female",
+                          paste0("**Hindfoot Length** (mm) ","mean *(SD)*"),
+                          paste0("**Weight** (g) ","mean *(SD)"),
+                          paste0("**Plot Information** (n) ","*(%)*"),
+                          "*Spectab Exclosure*", "*Control*", "*Rodent Exclosure*",
+                          "*Long-term Krat Exclosure*", "*Short-term Krat Exclosure*"),
+#column for 1977-1982
+                 bin1 = c(paste0(yearSumm$n[1], " (", yearSumm$p[1], "%)"), "",
+                          paste0(sexSumm$n[1:2], " (", sexSumm$p[1:2], "%)"),
+                          paste0(round(meanSumm$hindfoot_length[1], 2), " (",
+                                 round(sdSumm$hindfoot_length[1], 2), ")"),
+                          paste0(round(meanSumm$weight[1], 2), " (",
+                                 round(sdSumm$weight[1], 2), ")"), "",
+                          paste0(plotSumm$n[1:5], " (", plotSumm$p[1:5], ")")),
+#column for 1982-1987
+                 bin2 = c(paste0(yearSumm$n[2], " (", yearSumm$p[2], "%)"), "",
+                          paste0(sexSumm$n[3:4], " (", sexSumm$p[3:4], "%)"),
+                          paste0(round(meanSumm$hindfoot_length[2], 2), " (",
+                                 round(sdSumm$hindfoot_length[2], 2), ")"),
+                          paste0(round(meanSumm$weight[2], 2), " (",
+                                 round(sdSumm$weight[2], 2), ")"), "",
+                          paste0(plotSumm$n[6:10], " (", plotSumm$p[6:10], ")")),
+#column for 1987-1992
+                 bin3 = c(paste0(yearSumm$n[3], " (", yearSumm$p[3], "%)"), "",
+                          paste0(sexSumm$n[5:6], " (", sexSumm$p[5:6], "%)"),
+                          paste0(round(meanSumm$hindfoot_length[3], 2), " (",
+                                 round(sdSumm$hindfoot_length[3], 2), ")"),
+                          paste0(round(meanSumm$weight[3], 2), " (",
+                                 round(sdSumm$weight[3], 2), ")"), "",
+                          paste0(plotSumm$n[11:15], " (", plotSumm$p[11:15], ")")),
+
+#column for 1992-1997
+                 bin4 = c(paste0(yearSumm$n[4], " (", yearSumm$p[4], "%)"), "",
+                          paste0(sexSumm$n[7:8], " (", sexSumm$p[7:8], "%)"),
+                          paste0(round(meanSumm$hindfoot_length[4], 2), " (",
+                                 round(sdSumm$hindfoot_length[4], 2), ")"),
+                          paste0(round(meanSumm$weight[4], 2), " (",
+                                 round(sdSumm$weight[4], 2), ")"), "",
+                          paste0(plotSumm$n[16:20], " (", plotSumm$p[16:20], ")")),
+#column for 1992-1997
+                 bin5 = c(paste0(yearSumm$n[5], " (", yearSumm$p[5], "%)"), "",
+                          paste0(sexSumm$n[9:10], " (", sexSumm$p[9:10], "%)"),
+                          paste0(round(meanSumm$hindfoot_length[5], 2), " (",
+                                 round(sdSumm$hindfoot_length[5], 2), ")"),
+                          paste0(round(meanSumm$weight[5], 2), " (",
+                                 round(sdSumm$weight[5], 2), ")"), "",
+                          paste0(plotSumm$n[21:25], " (", plotSumm$p[21:25], ")")),
+stringsAsFactors = FALSE)
+```
+</div>
+This checks the structure of the data frame before formatting into a table with kable.
+<div class="fold o">
+```{r}
+t1
+```
+</div>
+<br>
+Then, I create summary plots of the data variables
+<br>
+<div class="fold s">
+```{r}
+#removes any levels where species_id has no data points
+survey_data2$species_id <- droplevels(survey_data2$species_id) 
+survey_data2$genus <- as.factor(survey_data2$genus)
+
+#creates plot for samples collected each year by genus
+p1 <- survey_data2 %>%
+  select(year, genus) %>%
+  group_by(year) %>%
+  count(genus) %>%
+  ggplot( aes(x=year, y=n, colour=genus)) +
+  geom_line(size=1.2) +
+  theme_bw() +
+  theme(legend.position = "bottom",
+        axis.text.x = element_text(angle = 90)) +
+  xlab("Year") + ylab("Number of Samples Collected") 
+
+#creates a boxplot comparing the weight of the sex variable by plot_id
+p2 <- ggplot(survey_data2, aes(x=as.factor(plot_id), y=weight, fill = as.factor(sex))) +
+    geom_boxplot(size = 0.5,
+                 alpha = 0.5) +
+  theme_bw() +
+  labs(y = "Weight (g)", x = "", fill = "Sex") + theme(legend.position = "none") +
+coord_flip()
+
+#creates a boxplot comparing the hindfoot length of the sex variable by plot_id
+p3 <- ggplot(survey_data2, aes(x=as.factor(plot_id), y=hindfoot_length, fill = as.factor(sex))) +
+    geom_boxplot(size = 0.5,
+                 alpha = 0.5) +
+  theme_bw() +
+  labs(y = "Hindfoot Length (mm)", x = "", fill = "Sex") +
+  theme(axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y=element_blank()) +
+coord_flip()
+
+#creates plots for weight and length by genus for each plot
+p4 <- ggplot(survey_data2, aes(x=hindfoot_length, y=weight, colour=as.factor(genus))) +
+  geom_point(na.rm = TRUE, alpha=0.5) + theme_bw() +
+  xlab("Hindfoot Length (mm)") + ylab("Weight (g)") + 
+  facet_grid(~ plot_id) + 
+  scale_colour_discrete(name = "Genus") + theme(legend.position = "none")
+  
+#creates plots of weight for each plot
+p5 <- ggplot(survey_data2, aes(x = weight, fill = plot_id)) +
+  geom_histogram( aes(y = ..density.. ), bins = 50, colour = "black", alpha = 0.5) +
+  geom_density(size=1, alpha=0.4) + 
+  theme_bw() + facet_grid(~ plot_id) + theme(legend.position = "none") +
+  xlab("Weight (g)") + ylab("Density")
+
+#creates plots of hindfoot length for each plot
+p6 <- ggplot(survey_data2, aes(x = hindfoot_length, fill = plot_id)) +
+  geom_histogram( aes(y = ..density.. ), bins = 50, colour = "black", alpha = 0.5) +
+  geom_density(size=1, alpha=0.4) + 
+  theme_bw() + facet_grid(~ plot_id) + theme(legend.position = "none") +
+  xlab("Hindfoot Length (mm)") + ylab("Density")
+  
+```
+### Summary Table
+```{r}
+#creates summary table with kable
+kable(t1, 
+      caption = "**Table 1. Summary of study variables in 5 year intervals**", #table caption
+      col.names = c("", "1977-1982", "1982-1987", "1987-1992", "1992-1997", "1997-2002"), #column titles, leaving blank space for first column
+      align = "lccccc",
+      type = "") %>%
+  column_spec(1, width_min = "4cm", border_right = "2px solid black") %>%
+  column_spec(c(2,3,4,5,6), width_min = "3cm", border_right = "1px solid #dddddd" ) %>%
+  row_spec(0, bold=T, color="white", background="#666666") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE) %>%
+  add_indent(c(3,4,8:12)) %>%  # indent rows for measures with levels
+  footnote(general = c("*% are within groups for all non-missing values*")) %>% # add footnote
+  add_header_above(c(" " = 1, "Year" = 5), bold=T, color="white", background="#666666", include_empty = T)
+```
+</div>
+### Data Visualisation 
+```{r}
+ggarrange(
+  p4, p1,
+  labels = c("a", "b"),
+  nrow = 2, heights = c(1,1.5)) #copied from Alyce's example
+```
+<center><font size = "3">**Figure 1. Visualisations of Genera. a)** Hindfoot Length vs Weight, **b)** Samples Collected</font></center>
+```{r}
+ggarrange( 
+  p2, p3,
+  labels = c("a", "b"),
+  ncol = 2, nrow = 1)
+```
+<center><font size = "3">**Figure 2. Distributions of Sex. a)** By Weight, **b)** By Hindfoot Length</font></center>
+```{r}
+ggarrange(
+  p5, p6,
+  labels = c("a", "b"),
+  ncol = 1, nrow = 2
+)
+```
+<center><font size = "3"> **Figure 3. Distribution of Exclosure. a)** By Weight, **b)** By Hindfoot Length</font></center>
+
+
+## Session Information
+***
+```{r}
+sessionInfo()
+```
